@@ -1,0 +1,435 @@
+Here's the complete code for the "Ascent" parallax page:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ascent — a parallax journey</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: #1c1f24;
+    --paper: #fbf7f0;
+    --sky-top: #f6e6c8;
+    --sky-bottom: #f2c6a0;
+    --font-display: 'Fraunces', serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:var(--font-body);
+    color:var(--ink);
+    background:var(--paper);
+    overflow-x:hidden;
+  }
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    .layer{transform:none !important;}
+  }
+
+  /* Global sky wash, colour-interpolated by scroll */
+  #sky{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    background: linear-gradient(180deg, var(--sky-top), var(--sky-bottom));
+    transition: background 0.1s linear;
+  }
+
+  /* ---------- HUD ---------- */
+  #hud{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:60;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:22px 5vw;
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    mix-blend-mode:difference;
+    color:#fff;
+    pointer-events:none;
+  }
+  #altitude-readout .num{ font-size:13px; font-weight:500; }
+
+  #flightpath{
+    position:fixed;
+    right:5vw;
+    top:50%;
+    transform:translateY(-50%);
+    z-index:60;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    mix-blend-mode:difference;
+  }
+  #flightpath .track{
+    width:1px;
+    height:160px;
+    background:rgba(255,255,255,0.35);
+    position:relative;
+  }
+  #flightpath .marker{
+    position:absolute;
+    left:50%;
+    top:0%;
+    width:7px; height:7px;
+    border-radius:50%;
+    background:#fff;
+    transform:translate(-50%,-50%);
+    transition: top 0.1s linear;
+  }
+  #flightpath .zone-label{
+    font-family:var(--font-mono);
+    font-size:9px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:#fff;
+    writing-mode: vertical-rl;
+  }
+
+  main{ position:relative; z-index:2; }
+
+  section{
+    position:relative;
+    height:100vh;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .layer{
+    position:absolute;
+    inset:-20% -10%;
+    will-change: transform;
+  }
+
+  .content{
+    position:relative;
+    z-index:5;
+    text-align:center;
+    padding:0 6vw;
+    pointer-events:none;
+  }
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    opacity:0.75;
+    margin-bottom:16px;
+  }
+  h1, h2{
+    font-family:var(--font-display);
+    font-weight:600;
+    line-height:0.98;
+  }
+  h1{ font-size:clamp(3.4rem, 10vw, 7.5rem); font-weight:700; }
+  h2{ font-size:clamp(2.2rem, 5.5vw, 4rem); }
+  .lede{
+    margin-top:20px;
+    font-size:clamp(1rem, 1.6vw, 1.2rem);
+    max-width:46ch;
+    margin-left:auto; margin-right:auto;
+    opacity:0.82;
+    font-weight:400;
+    line-height:1.6;
+  }
+
+  /* ---------- ZONE 1 — Trailhead ---------- */
+  #trailhead{ background:transparent; }
+  #trailhead .content{ color:#3b2a1d; margin-bottom:14vh; }
+  #trailhead .scroll-cue{
+    position:absolute;
+    bottom:8vh; left:0; right:0;
+    text-align:center;
+    font-family:var(--font-mono);
+    font-size:10px;
+    letter-spacing:0.2em;
+    text-transform:uppercase;
+    color:#3b2a1d;
+    opacity:0.6;
+  }
+
+  /* ---------- ZONE 2 — Foothills ---------- */
+  #foothills .content{ color:#3d2318; }
+
+  /* ---------- ZONE 3 — Canopy (clouds) ---------- */
+  #canopy .content{ color:#1c2b3a; }
+
+  /* ---------- ZONE 4 — Stratosphere ---------- */
+  #strato .content{ color:#eef2f8; }
+
+  /* ---------- ZONE 5 — Orbit ---------- */
+  #orbit{ background:transparent; }
+  #orbit .content{ color:#f4f1ea; }
+  #orbit .lede a{
+    color:#f4f1ea;
+    text-decoration:underline;
+    text-underline-offset:4px;
+    pointer-events:auto;
+  }
+
+  footer{
+    position:relative;
+    z-index:2;
+    text-align:center;
+    padding:60px 6vw 80px;
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:0.08em;
+    color:#f4f1ea;
+    background:#05050a;
+  }
+</style>
+</head>
+<body>
+
+<div id="sky"></div>
+
+<div id="hud">
+  <span>ASCENT</span>
+  <span id="altitude-readout">ALT <span class="num">000</span> M</span>
+</div>
+
+<div id="flightpath">
+  <span class="zone-label" id="zone-label">TRAILHEAD</span>
+  <div class="track"><div class="marker" id="marker"></div></div>
+</div>
+
+<main>
+
+  <!-- ================= ZONE 1: TRAILHEAD ================= -->
+  <section id="trailhead">
+    <svg class="layer" data-speed="0.05" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice" style="z-index:1;">
+      <circle cx="1250" cy="220" r="130" fill="#ffd98a"/>
+    </svg>
+    <svg class="layer" data-speed="0.12" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice" style="z-index:2;">
+      <path d="M0,620 C300,560 500,600 800,560 C1100,520 1350,570 1600,540 L1600,900 L0,900 Z" fill="#e7b788"/>
+    </svg>
+    <svg class="layer" data-speed="0.22" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice" style="z-index:3;">
+      <path d="M0,700 C250,650 450,700 700,660 C1000,615 1300,670 1600,630 L1600,900 L0,900 Z" fill="#c98f5f"/>
+    </svg>
+    <svg class="layer" data-speed="0.4" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice" style="z-index:4;">
+      <path d="M0,780 C200,745 380,790 620,760 C880,725 1180,780 1600,740 L1600,900 L0,900 Z" fill="#8a5a3a"/>
+    </svg>
+    <svg class="layer" data-speed="0.65" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice" style="z-index:6;">
+      <g fill="#3d2416">
+        <path d="M60,900 L80,760 L96,900 Z"/>
+        <path d="M140,900 L165,730 L184,900 Z"/>
+        <path d="M1420,900 L1445,740 L1466,900 Z"/>
+        <path d="M1520,900 L1538,780 L1556,900 Z"/>
+        <path d="M260,900 L272,800 L286,900 Z"/>
+        <path d="M1300,900 L1316,790 L1332,900 Z"/>
+      </g>
+    </svg>
+    <div class="content">
+      <div class="eyebrow">A Parallax Journey — Ground to Orbit</div>
+      <h1>Ascent</h1>
+      <p class="lede">Scroll to climb. Every layer of sky moves at its own pace — the farther the object, the slower it drifts.</p>
+    </div>
+    <div class="scroll-cue">Scroll ↓</div>
+  </section>
+
+  <!-- ================= ZONE 2: FOOTHILLS ================= -->
+  <section id="foothills">
+    <svg class="layer" data-speed="0.08" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice" style="z-index:1;">
+      <path d="M0,560 C400,480 900,520 1600,440 L1600,900 L0,900 Z" fill="#d59a6a" opacity="0.6"/>
+    </svg>
+    <svg class="layer" data-speed="0.18" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice" style="z-index:2;">
+      <path d="M0,640 L260,420 L520,640 L760,460 L1020,640 L1300,400 L1600,640 L1600,900 L0,900 Z" fill="#a9714a"/>
+    </svg>
+    <svg class="layer" data-speed="-0.06" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice" style="z-index:3;">
+      <g fill="#5c3d26" opacity="0.85">
+        <path d="M300,300 q18,-14 36,0 q10,-8 18,2 q-10,10 -27,8 q-17,4 -27,-10z"/>
+        <path d="M1180,220 q18,-14 36,0 q10,-8 18,2 q-10,10 -27,8 q-17,4 -27,-10z"/>
+      </g>
+    </svg>
+    <svg class="layer" data-speed="0.42" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice" style="z-index:4;">
+      <path d="M0,760 L220,560 L440,760 L680,600 L920,760 L1180,540 L1600,760 L1600,900 L0,900 Z" fill="#6f4527"/>
+    </svg>
+    <div class="content">
+      <div class="eyebrow">Zone 02 — 400M</div>
+      <h2>The foothills rise<br/>to meet you.</h2>
+      <p class="lede">Ridgelines stack three deep here — the nearest catches the light, the farthest just a shadow of blue.</p>
+    </div>
+  </section>
+
+  <!-- ================= ZONE 3: CANOPY (clouds) ================= -->
+  <section id="canopy">
+    <svg class="layer" data-speed="0.1" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" style="z-index:1;">
+      <ellipse cx="250" cy="200" rx="140" ry="46" fill="#ffffff" opacity="0.55"/>
+      <ellipse cx="1300" cy="600" rx="180" ry="55" fill="#ffffff" opacity="0.5"/>
+    </svg>
+    <svg class="layer" data-speed="0.28" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" style="z-index:2;">
+      <g fill="#ffffff" opacity="0.85">
+        <ellipse cx="700" cy="300" rx="120" ry="38"/>
+        <ellipse cx="800" cy="280" rx="90" ry="34"/>
+        <ellipse cx="610" cy="290" rx="80" ry="30"/>
+      </g>
+      <g fill="#ffffff" opacity="0.85">
+        <ellipse cx="1450" cy="720" rx="110" ry="36"/>
+        <ellipse cx="1540" cy="705" rx="80" ry="30"/>
+      </g>
+    </svg>
+    <svg class="layer" data-speed="0.5" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" style="z-index:4;">
+      <g fill="#ffffff">
+        <ellipse cx="200" cy="700" rx="160" ry="48"/>
+        <ellipse cx="330" cy="685" rx="110" ry="40"/>
+        <ellipse cx="90" cy="690" rx="90" ry="34"/>
+      </g>
+      <g fill="#ffffff">
+        <ellipse cx="1150" cy="180" rx="150" ry="44"/>
+        <ellipse cx="1260" cy="165" rx="100" ry="36"/>
+      </g>
+    </svg>
+    <div class="content">
+      <div class="eyebrow">Zone 03 — 4,200M</div>
+      <h2>Above the canopy,<br/>into the weather.</h2>
+      <p class="lede">Cloud decks pass in front of and behind you at once — the parallax illusion is strongest right here.</p>
+    </div>
+  </section>
+
+  <!-- ================= ZONE 4: STRATOSPHERE ================= -->
+  <section id="strato">
+    <svg class="layer" data-speed="0.06" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" style="z-index:1;">
+      <circle cx="1350" cy="180" r="2" fill="#fff"/>
+      <circle cx="1420" cy="340" r="1.6" fill="#fff"/>
+      <circle cx="220" cy="120" r="1.8" fill="#fff"/>
+      <circle cx="140" cy="380" r="1.4" fill="#fff"/>
+      <circle cx="760" cy="90" r="1.6" fill="#fff"/>
+    </svg>
+    <svg class="layer" data-speed="0.2" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" style="z-index:2;">
+      <g stroke="#ffffff" stroke-width="2" opacity="0.35" fill="none">
+        <path d="M100,500 q200,-30 420,0 t420,0"/>
+        <path d="M900,650 q220,-24 460,0"/>
+      </g>
+    </svg>
+    <svg class="layer" data-speed="0.02" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice" style="z-index:3;">
+      <ellipse cx="800" cy="1400" rx="1500" ry="620" fill="#0b1a33" opacity="0.55"/>
+    </svg>
+    <div class="content">
+      <div class="eyebrow">Zone 04 — 20,000M</div>
+      <h2>The curve<br/>becomes visible.</h2>
+      <p class="lede">Weather thins to wisps. The horizon starts to bend — the first hint that you're leaving it behind.</p>
+    </div>
+  </section>
+
+  <!-- ================= ZONE 5: ORBIT ================= -->
+  <section id="orbit">
+    <svg class="layer" data-speed="0.03" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" style="z-index:1;">
+      <g fill="#fff">
+        <circle cx="120" cy="120" r="1.4"/><circle cx="340" cy="80" r="1.2"/><circle cx="560" cy="220" r="1.6"/>
+        <circle cx="780" cy="60" r="1.3"/><circle cx="980" cy="180" r="1.5"/><circle cx="1180" cy="90" r="1.2"/>
+        <circle cx="1400" cy="150" r="1.6"/><circle cx="1520" cy="300" r="1.3"/><circle cx="200" cy="400" r="1.4"/>
+        <circle cx="600" cy="500" r="1.2"/><circle cx="900" cy="620" r="1.5"/><circle cx="1300" cy="560" r="1.3"/>
+        <circle cx="80" cy="650" r="1.4"/><circle cx="1460" cy="700" r="1.2"/><circle cx="720" cy="780" r="1.6"/>
+      </g>
+    </svg>
+    <svg class="layer" data-speed="0.16" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" style="z-index:2;">
+      <g fill="#fff" opacity="0.85">
+        <circle cx="260" cy="220" r="2"/><circle cx="500" cy="140" r="1.8"/><circle cx="1050" cy="260" r="2.2"/>
+        <circle cx="1330" cy="420" r="1.8"/><circle cx="820" cy="480" r="2"/><circle cx="150" cy="540" r="1.6"/>
+        <circle cx="1480" cy="180" r="2"/><circle cx="640" cy="640" r="1.8"/>
+      </g>
+    </svg>
+    <svg class="layer" data-speed="0.32" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" style="z-index:3;">
+      <g fill="#e8e0d2">
+        <circle cx="1220" cy="620" r="90"/>
+        <circle cx="1180" cy="590" r="14" fill="#c9bfa8"/>
+        <circle cx="1260" cy="640" r="10" fill="#c9bfa8"/>
+        <circle cx="1230" cy="660" r="7" fill="#c9bfa8"/>
+      </g>
+    </svg>
+    <div class="content">
+      <div class="eyebrow">Zone 05 — 400,000M</div>
+      <h2>Orbit.</h2>
+      <p class="lede">You've climbed through five skies to get here. <a href="#trailhead">Back to the trailhead ↑</a></p>
+    </div>
+  </section>
+
+</main>
+
+<footer>ASCENT — A PARALLAX SCROLL STUDY · BUILT WITH LAYERED SVG, NO IMAGES</footer>
+
+<script>
+/* ---------------- Parallax layers ---------------- */
+const layers = document.querySelectorAll('.layer');
+let ticking = false;
+
+function updateParallax(){
+  layers.forEach(el=>{
+    const speed = parseFloat(el.dataset.speed);
+    const section = el.closest('section');
+    const rect = section.getBoundingClientRect();
+    const offset = rect.top * speed;
+    el.style.transform = `translate3d(0, ${offset}px, 0)`;
+  });
+  ticking = false;
+}
+function onScroll(){
+  if(!ticking){
+    requestAnimationFrame(updateParallax);
+    ticking = true;
+  }
+}
+window.addEventListener('scroll', onScroll, {passive:true});
+window.addEventListener('resize', onScroll);
+updateParallax();
+
+/* ---------------- Sky colour interpolation ---------------- */
+const skyStops = [
+  {p:0.00, top:[246,230,200], bottom:[242,198,160]}, // trailhead — warm dawn
+  {p:0.22, top:[247,205,150], bottom:[214,150,110]}, // foothills — golden hour
+  {p:0.44, top:[168,206,232], bottom:[122,168,214]}, // canopy — daylight blue
+  {p:0.66, top:[58,92,150],   bottom:[24,40,80]},    // stratosphere — deep blue
+  {p:0.88, top:[10,12,26],    bottom:[3,3,8]}         // orbit — near black
+];
+function lerp(a,b,t){ return a + (b-a)*t; }
+function mix(c1,c2,t){ return [lerp(c1[0],c2[0],t), lerp(c1[1],c2[1],t), lerp(c1[2],c2[2],t)]; }
+function rgbStr(c){ return `rgb(${c[0]|0},${c[1]|0},${c[2]|0})`; }
+
+const skyEl = document.getElementById('sky');
+function updateSky(){
+  const docH = document.documentElement.scrollHeight - window.innerHeight;
+  const p = docH > 0 ? window.scrollY / docH : 0;
+
+  let a = skyStops[0], b = skyStops[skyStops.length-1];
+  for(let i=0;i<skyStops.length-1;i++){
+    if(p >= skyStops[i].p && p <= skyStops[i+1].p){
+      a = skyStops[i]; b = skyStops[i+1]; break;
+    }
+  }
+  const span = (b.p - a.p) || 1;
+  const t = Math.max(0, Math.min(1, (p - a.p) / span));
+  const top = mix(a.top, b.top, t);
+  const bottom = mix(a.bottom, b.bottom, t);
+  skyEl.style.background = `linear-gradient(180deg, ${rgbStr(top)}, ${rgbStr(bottom)})`;
+
+  // HUD altitude + flight marker + zone label
+  const altitude = Math.round(p * 400000);
+  document.querySelector('#altitude-readout .num').textContent = altitude.toString().padStart(3,'0');
+  document.getElementById('marker').style.top = (p*100) + '%';
+
+  const zones = ['TRAILHEAD','FOOTHILLS','CANOPY','STRATOSPHERE','ORBIT'];
+  const zoneIndex = Math.min(zones.length-1, Math.floor(p * zones.length));
+  document.getElementById('zone-label').textContent = zones[zoneIndex];
+}
+window.addEventListener('scroll', ()=> requestAnimationFrame(updateSky), {passive:true});
+window.addEventListener('resize', updateSky);
+updateSky();
+</script>
+</body>
+</html>
+```
